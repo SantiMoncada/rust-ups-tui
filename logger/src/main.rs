@@ -182,7 +182,7 @@ fn main() {
                         data.timestamp as i64,
                     ),
                 );
-
+                #[cfg(debug_assertions)]
                 println!("{data:?}");
             }
             Err(e) => {
