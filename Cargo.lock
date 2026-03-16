@@ -134,6 +134,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "rupsui"
+version = "0.1.0"
+dependencies = [
+ "rusqlite",
+]
+
+[[package]]
 name = "rusqlite"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -149,7 +156,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-ups-tui"
+name = "rust-ups-logger"
 version = "0.1.0"
 dependencies = [
  "rusqlite",
