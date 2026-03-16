@@ -3,14 +3,14 @@ use std::io::{BufRead, BufReader, Write};
 use std::net::TcpStream;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const IP: &str = "localhost";
+const IP: &str = "192.168.0.24";
 const PORT: &str = "3493";
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum NutStatus {
-    OL,
-    OB,
-    LB,
+    OL = 0,
+    OB = 1,
+    LB = 2,
 }
 
 #[derive(Debug)]
@@ -21,10 +21,6 @@ struct DataEntry {
     outlet: bool,
     timestamp: u64,
 }
-
-fn init_db() {}
-
-fn get_ups_data() {}
 
 fn main() {
     println!("Connecting to DB...");
@@ -39,22 +35,16 @@ fn main() {
     };
 
     let _ = conn.execute(
-        "CREATE TABLE person (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL
-    )",
+        "CREATE TABLE IF NOT EXISTS data_log (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            charge    INTEGER NOT NULL,
+            load      INTEGER NOT NULL,
+            status    INTEGER NOT NULL,
+            outlet    INTEGER NOT NULL,
+            timestamp INTEGER NOT NULL
+        );",
         (),
     );
-
-    let insert = conn.execute("INSERT INTO person (name) VALUES (?1)", ("mike",));
-
-    let _ = match insert {
-        Ok(i) => i,
-        Err(e) => {
-            println!("Failed to insert: {}", e);
-            return;
-        }
-    };
 
     //get the data from ups
     let stream = TcpStream::connect(format!("{}:{}", IP, PORT));
@@ -139,5 +129,17 @@ fn main() {
         };
     }
 
-    println!("structed data {data:?}");
+    let _ = conn.execute(
+        "INSERT INTO data_log (charge, load, status, outlet, timestamp)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+        (
+            data.charge,
+            data.load,
+            data.status as u8,
+            data.outlet as u8,
+            data.timestamp as i64,
+        ),
+    );
+
+    println!("{data:?}");
 }
