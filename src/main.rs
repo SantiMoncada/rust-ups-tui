@@ -98,21 +98,21 @@ fn main() {
         }
 
         match line {
-            l if l.contains("battery.charge") => {
+            l if l.contains("battery.charge ") => {
                 let value = l.split_whitespace().last().expect("Failed to parse charge");
                 data.charge = value
                     .trim_matches('"')
                     .parse()
                     .expect("Failed to parse charge");
             }
-            l if l.contains("ups.load") => {
+            l if l.contains("ups.load ") => {
                 let value = l.split_whitespace().last().expect("Failed to parse load");
                 data.load = value
                     .trim_matches('"')
                     .parse()
                     .expect("Failed to parse charge");
             }
-            l if l.contains("ups.status") => {
+            l if l.contains("ups.status ") => {
                 let value = l.split_whitespace().last().expect("Failed to parse status");
                 data.status = match value.trim_matches('"') {
                     "OL" => NutStatus::OL,
@@ -124,7 +124,7 @@ fn main() {
                     }
                 }
             }
-            l if l.contains("outlet.1.status") => {
+            l if l.contains("outlet.1.status ") => {
                 let value = l.split_whitespace().last().expect("Failed to parse Outlet");
                 data.outlet = match value.trim_matches('"') {
                     "on" => true,
