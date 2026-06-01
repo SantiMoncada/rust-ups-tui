@@ -1,2 +1,5 @@
 /target
 my_db.db
+*.db
+*.db-shm
+*.db-wal

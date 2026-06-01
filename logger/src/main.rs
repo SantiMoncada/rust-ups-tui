@@ -36,6 +36,20 @@ fn init_db() -> Connection {
         }
     };
 
+    match conn.execute_batch(
+        "
+        PRAGMA journal_mode=WAL;
+        PRAGMA synchronous=NORMAL;
+        PRAGMA busy_timeout=5000;
+        ",
+    ) {
+        Ok(c) => c,
+        Err(e) => {
+            println!("Failed to set WAL mode: {}", e);
+            process::exit(1);
+        }
+    };
+
     let create = conn.execute(
         "CREATE TABLE IF NOT EXISTS data_log (
             id        INTEGER PRIMARY KEY AUTOINCREMENT,
