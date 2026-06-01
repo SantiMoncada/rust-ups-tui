@@ -8,24 +8,12 @@ use std::{io::stdout, time::Duration};
 use ratatui::{
     Terminal,
     backend::{self, CrosstermBackend},
-    layout::{Alignment, Constraint, Layout},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Style},
-    widgets::{Block, Borders, Paragraph},
+    symbols,
+    text::{self, Line, Text},
+    widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Paragraph},
 };
-
-struct App {
-    counter: u32,
-    last_key: String,
-}
-
-impl App {
-    fn new() -> Self {
-        App {
-            counter: 0,
-            last_key: String::from("none"),
-        }
-    }
-}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     enable_raw_mode()?;
@@ -37,62 +25,114 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     terminal.clear()?;
 
-    let mut app = App::new();
-
     loop {
         terminal.draw(|frame| {
             let area = frame.area();
 
             let body = Block::default()
-                .title("UPS@192.168.0.67")
+                .title(" UPS@192.168.0.67 ")
                 .title_alignment(Alignment::Center)
                 .borders(Borders::ALL)
+                .border_type(ratatui::widgets::BorderType::Rounded)
                 .style(Style::default().fg(Color::Yellow));
 
-            let inner = body.inner(area);
-            let chunks = Layout::default()
-                .direction(ratatui::layout::Direction::Vertical)
-                .constraints([
-                    Constraint::Length(3),
-                    Constraint::Length(3),
-                    Constraint::Min(0),
-                ])
-                .split(inner);
+            let inner_body = body.inner(area);
+
+            let body_layout = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Ratio(2, 3), Constraint::Ratio(1, 3)])
+                .split(inner_body);
+
+            let chart_layout = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Ratio(2, 1), Constraint::Ratio(1, 2)])
+                .split(body_layout[0]);
             frame.render_widget(body, area);
 
-            let header = Paragraph::new("Press key 'q' to quit!.")
-                .block(Block::default().borders(Borders::ALL));
-            frame.render_widget(header, chunks[0]);
+            let text_information = Text::from(vec![
+                Line::from("Up time 67 Days"),
+                Line::from("Total 50Wh"),
+                Line::from("Daily 8Wh"),
+                Line::from("Status"),
+            ]);
 
-            let counter_text = format!("Keypresses: {}", app.counter);
+            let data = vec![
+                (0.0, 2.0),
+                (1.0, 5.0),
+                (2.0, 3.0),
+                (3.0, 8.0),
+                (4.0, 6.0),
+                (5.0, 1.0),
+                (6.0, 4.0),
+            ];
 
-            let counter = Paragraph::new(counter_text)
-                .style(Style::default().fg(Color::Yellow))
-                .block(Block::default().title("Counter").borders(Borders::ALL));
+            let dataset = Dataset::default()
+                .marker(symbols::Marker::Dot)
+                .graph_type(GraphType::Line)
+                .style(Style::default().fg(Color::LightGreen))
+                .data(&data);
 
-            frame.render_widget(counter, chunks[1]);
+            let chart = Chart::new(vec![dataset])
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_type(ratatui::widgets::BorderType::Rounded)
+                        .border_style(Style::default().fg(Color::Gray))
+                        .title(" Charge ")
+                        .title_alignment(ratatui::layout::HorizontalAlignment::Center),
+                )
+                .x_axis(
+                    Axis::default().bounds([0.0, 6.0]), // min and max of your data
+                )
+                .y_axis(
+                    Axis::default()
+                        .title("Y")
+                        .bounds([0.0, 10.0])
+                        .labels(vec!["0", "5", "10"])
+                        .style(Style::default().fg(Color::Gray)),
+                );
 
-            let last_key_text = format!("Last Key: {}", app.last_key);
+            let dataset2 = Dataset::default()
+                // .name("my data")
+                .marker(symbols::Marker::Dot) // or Dot, Block
+                .graph_type(GraphType::Line) // or Bar
+                .style(Style::default().fg(Color::Red))
+                .data(&data);
 
-            let last_key = Paragraph::new(last_key_text)
-                .style(Style::default().fg(Color::Green))
-                .block(Block::default().title("Counter").borders(Borders::ALL));
+            let chart2 = Chart::new(vec![dataset2])
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_type(ratatui::widgets::BorderType::Rounded)
+                        .border_style(Style::default().fg(Color::Gray))
+                        .title(" Power ")
+                        .title_alignment(ratatui::layout::HorizontalAlignment::Center),
+                )
+                .x_axis(
+                    Axis::default().bounds([0.0, 4.0]), // min and max of your data
+                )
+                .y_axis(
+                    Axis::default()
+                        // .title("Y")
+                        .bounds([0.0, 10.0]), // .labels(vec!["0", "5", "10"]),
+                );
 
-            frame.render_widget(last_key, chunks[2]);
+            frame.render_widget(&chart, chart_layout[0]);
+            frame.render_widget(&chart2, chart_layout[1]);
+            frame.render_widget(&text_information, body_layout[1]);
         })?;
 
         if event::poll(std::time::Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
+                    KeyCode::Char('c')
+                        if key
+                            .modifiers
+                            .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                    {
+                        break;
+                    }
                     KeyCode::Char('q') => break,
-                    KeyCode::Char(c) => {
-                        app.counter += 1;
-                        app.last_key = c.to_string();
-                    }
-                    KeyCode::Enter => {
-                        app.counter += 1;
-                        app.last_key = String::from("Enter");
-                    }
                     _ => {}
                 }
             }
