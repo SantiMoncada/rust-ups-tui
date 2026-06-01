@@ -3,16 +3,16 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use std::{io::stdout, time::Duration};
+use std::io::stdout;
 
 use ratatui::{
     Terminal,
-    backend::{self, CrosstermBackend},
+    backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     symbols,
-    text::{self, Line, Text},
-    widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Paragraph},
+    text::{Line, Span, Text},
+    widgets::{Axis, Block, Borders, Chart, Dataset, GraphType},
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,12 +40,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let body_layout = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Ratio(2, 3), Constraint::Ratio(1, 3)])
+                .constraints([Constraint::Fill(1), Constraint::Length(20)])
                 .split(inner_body);
 
             let chart_layout = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Ratio(2, 1), Constraint::Ratio(1, 2)])
+                .constraints([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
                 .split(body_layout[0]);
             frame.render_widget(body, area);
 
@@ -69,28 +69,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let dataset = Dataset::default()
                 .marker(symbols::Marker::Dot)
                 .graph_type(GraphType::Line)
-                .style(Style::default().fg(Color::LightGreen))
+                .style(Style::default().fg(Color::Green))
                 .data(&data);
 
             let chart = Chart::new(vec![dataset])
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .border_type(ratatui::widgets::BorderType::Rounded)
-                        .border_style(Style::default().fg(Color::Gray))
-                        .title(" Charge ")
-                        .title_alignment(ratatui::layout::HorizontalAlignment::Center),
-                )
-                .x_axis(
-                    Axis::default().bounds([0.0, 6.0]), // min and max of your data
-                )
+                .style(Style::default().fg(Color::Gray))
+                .block(Block::default())
                 .y_axis(
                     Axis::default()
-                        .title("Y")
-                        .bounds([0.0, 10.0])
-                        .labels(vec!["0", "5", "10"])
-                        .style(Style::default().fg(Color::Gray)),
-                );
+                        .title(Span::styled(
+                            "CHARGE",
+                            Style::default()
+                                .fg(Color::Green)
+                                .add_modifier(Modifier::BOLD),
+                        ))
+                        .bounds([0.0, 100.0])
+                        .labels(["0%", "50%", "100%"]),
+                )
+                .x_axis(Axis::default().bounds([0.0, 6.0]).labels([""]));
 
             let dataset2 = Dataset::default()
                 // .name("my data")
@@ -100,21 +96,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .data(&data);
 
             let chart2 = Chart::new(vec![dataset2])
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .border_type(ratatui::widgets::BorderType::Rounded)
-                        .border_style(Style::default().fg(Color::Gray))
-                        .title(" Power ")
-                        .title_alignment(ratatui::layout::HorizontalAlignment::Center),
-                )
-                .x_axis(
-                    Axis::default().bounds([0.0, 4.0]), // min and max of your data
-                )
+                .style(Style::default().fg(Color::Gray))
+                .block(Block::default())
                 .y_axis(
                     Axis::default()
-                        // .title("Y")
-                        .bounds([0.0, 10.0]), // .labels(vec!["0", "5", "10"]),
+                        .title(Span::styled(
+                            "POWER",
+                            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                        ))
+                        .bounds([0.0, 10.0])
+                        .labels(vec!["0W", "150W", "300W"]),
+                )
+                .x_axis(
+                    Axis::default()
+                        .bounds([0.0, 4.0])
+                        .labels(["24H", "12H", "0H"]), // min and max of your data
                 );
 
             frame.render_widget(&chart, chart_layout[0]);
