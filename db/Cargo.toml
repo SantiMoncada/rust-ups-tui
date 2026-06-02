@@ -1,0 +1,8 @@
+[package]
+name = "db"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+directories = "6.0.0"
+rusqlite = { version = "0.40.0", features = ["bundled"] }
